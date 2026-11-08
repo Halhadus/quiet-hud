@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible QuietHUD problem on Linux.
+labels: [bug]
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: QuietHUD, Minecraft, Java, Fabric Loader and Fabric API versions.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Linux and graphics environment
+      description: Distribution, kernel, CPU/GPU, driver and OpenGL or Vulkan backend.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: What happened?
+      description: Include reproduction steps, expected behavior and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Relevant diagnostics or logs
+      description: For sensor issues, use Diagnostics → Copy details. Remove personal paths, private commands, tokens and unrelated log content before posting.
+      render: text

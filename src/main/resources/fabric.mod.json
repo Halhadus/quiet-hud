@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "quiethud",
+  "version": "${version}",
+  "name": "QuietHUD",
+  "description": "A small, personal Linux telemetry HUD with native Minecraft GUI rendering, sensor selection and custom entries.",
+  "authors": ["Halhadus"],
+  "contact": {"sources": "https://github.com/Halhadus/quiet-hud", "issues": "https://github.com/Halhadus/quiet-hud/issues"},
+  "license": "MIT",
+  "icon": "assets/quiethud/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["io.github.halhadus.quiethud.QuietHud"],
+    "modmenu": ["io.github.halhadus.quiethud.ModMenuIntegration"],
+    "sodium:config_api_user": ["io.github.halhadus.quiethud.SodiumIntegration"]
+  },
+  "depends": {"fabricloader": ">=${loader_version}", "minecraft": "~${minecraft_version}", "java": ">=${java_version}", "fabric-api": ">=${fabric_api_version}"},
+  "suggests": {"modmenu": "*", "sodium": ">=${sodium_min_version}"},
+  "breaks": {"sodium": "<${sodium_min_version}"}
+}

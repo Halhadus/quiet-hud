@@ -1,0 +1,25 @@
+plugins { id 'net.fabricmc.fabric-loom' version "${loom_version}" }
+version = "${mod_version}+${minecraft_version}"
+group = 'io.github.halhadus'
+base { archivesName = 'quiet-hud' }
+repositories { mavenCentral(); maven { url = 'https://api.modrinth.com/maven' } }
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    compileOnly "maven.modrinth:modmenu:${modmenu_version}"
+    compileOnly "maven.modrinth:sodium:${sodium_version}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+java { toolchain.languageVersion = JavaLanguageVersion.of(java_version as int); withSourcesJar() }
+tasks.withType(JavaCompile).configureEach { options.release = java_version as int; options.encoding = 'UTF-8'; options.compilerArgs += ['-Xlint:all,-classfile', '-Werror'] }
+processResources {
+    def metadata = [version: project.version, minecraft_version: minecraft_version, java_version: java_version, loader_version: loader_version, fabric_api_version: fabric_api_version, sodium_min_version: sodium_min_version]
+    inputs.properties metadata
+    filesMatching('fabric.mod.json') { expand metadata }
+}
+jar { from('LICENSE') { rename { "${it}_quiethud" } } }
+tasks.withType(AbstractArchiveTask).configureEach { preserveFileTimestamps = false; reproducibleFileOrder = true }
+test { useJUnitPlatform() }
+tasks.register('printVersion') { doLast { println project.version } }

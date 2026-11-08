@@ -1,0 +1,76 @@
+name: Build and release
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Read Java version
+        id: java
+        run: echo "version=$(sed -n 's/^java_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java.outputs.version }}
+      - uses: gradle/actions/setup-gradle@7ca78c16c887dc6c5f36fd6d0cb0f5c23d940e69
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Verify release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: test "$RELEASE_TAG" = "v$(./gradlew -q printVersion)"
+      - name: Build and test
+        run: ./gradlew --no-daemon build
+      - name: Collect release files
+        run: |
+          mkdir -p release
+          cp build/libs/*.jar release/
+          cd release
+          sha256sum *.jar > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: quiethud-release
+          path: release/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: failure()
+        with:
+          name: test-reports
+          path: build/reports/tests/
+          if-no-files-found: ignore
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: quiethud-release
+          path: release
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd release
+          sha256sum --check SHA256SUMS
+          gh release create "$RELEASE_TAG" ./*.jar SHA256SUMS --verify-tag --title "QuietHUD $RELEASE_TAG" --generate-notes
